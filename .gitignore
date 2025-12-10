@@ -1,0 +1,15 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+*.log
+logs/
+.DS_Store
+application-local.properties
+*.class
+bin/
+.settings/
+.classpath
+.project
+

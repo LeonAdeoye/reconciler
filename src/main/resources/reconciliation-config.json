@@ -1,0 +1,127 @@
+{
+  "sourceSystems": [
+    {
+      "name": "system-a",
+      "dataSources": [
+        {
+          "type": "COUCHBASE",
+          "name": "couchbase-quotes",
+          "connectionConfig": {
+            "hosts": ["localhost:8091"],
+            "bucket": "quotes-bucket",
+            "username": "${couchbase.user}",
+            "password": "${couchbase.password}"
+          },
+          "entityTypes": ["QUOTE"],
+          "queries": {
+            "QUOTE": {
+              "count": "SELECT COUNT(*) as count FROM `quotes-bucket` WHERE tradeDate = $1",
+              "parameters": {
+                "tradeDate": "DATE"
+              }
+            }
+          }
+        },
+        {
+          "type": "MONGODB",
+          "name": "mongo-orders",
+          "connectionConfig": {
+            "uri": "${mongo.uri}",
+            "database": "orders-db",
+            "collection": "orders"
+          },
+          "entityTypes": ["ORDER"],
+          "queries": {
+            "ORDER": {
+              "count": {
+                "tradeDate": { "$eq": "?tradeDate" }
+              },
+              "parameters": {
+                "tradeDate": "DATE"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "system-b",
+      "dataSources": [
+        {
+          "type": "COUCHBASE",
+          "name": "couchbase-quotes-b",
+          "connectionConfig": {
+            "hosts": ["localhost:8091"],
+            "bucket": "quotes-bucket-b",
+            "username": "${couchbase.user}",
+            "password": "${couchbase.password}"
+          },
+          "entityTypes": ["QUOTE"],
+          "queries": {
+            "QUOTE": {
+              "count": "SELECT COUNT(*) as count FROM `quotes-bucket-b` WHERE tradeDate = $1",
+              "parameters": {
+                "tradeDate": "DATE"
+              }
+            }
+          }
+        },
+        {
+          "type": "MONGODB",
+          "name": "mongo-orders-b",
+          "connectionConfig": {
+            "uri": "${mongo.uri}",
+            "database": "orders-db-b",
+            "collection": "orders"
+          },
+          "entityTypes": ["ORDER"],
+          "queries": {
+            "ORDER": {
+              "count": {
+                "tradeDate": { "$eq": "?tradeDate" }
+              },
+              "parameters": {
+                "tradeDate": "DATE"
+              }
+            }
+          }
+        },
+        {
+          "type": "ORACLE",
+          "name": "oracle-orders",
+          "connectionConfig": {
+            "jdbcUrl": "${oracle.url}",
+            "username": "${oracle.user}",
+            "password": "${oracle.password}"
+          },
+          "entityTypes": ["ORDER"],
+          "queries": {
+            "ORDER": {
+              "count": "SELECT COUNT(*) as count FROM orders WHERE trade_date = :tradeDate",
+              "parameters": {
+                "tradeDate": "DATE"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "reconciliationRules": [
+    {
+      "name": "quote-reconciliation",
+      "sourceSystemA": "system-a",
+      "sourceSystemB": "system-b",
+      "entityType": "QUOTE",
+      "tradeDateField": "tradeDate"
+    },
+    {
+      "name": "order-reconciliation",
+      "sourceSystemA": "system-a",
+      "sourceSystemB": "system-b",
+      "entityType": "ORDER",
+      "tradeDateField": "tradeDate"
+    }
+  ]
+}
+
