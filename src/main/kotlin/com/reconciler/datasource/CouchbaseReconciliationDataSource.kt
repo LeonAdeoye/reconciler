@@ -12,7 +12,8 @@ import java.time.format.DateTimeFormatter
 
 class CouchbaseReconciliationDataSource(
     private val dataSourceName: String,
-    private val cluster: Cluster
+    private val cluster: Cluster,
+    private val bucket: Bucket
 ) : ReconciliationDataSource {
 
     override fun getCount(
