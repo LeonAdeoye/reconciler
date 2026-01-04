@@ -46,6 +46,9 @@ dependencies {
     implementation("ch.qos.logback.contrib:logback-jackson:0.1.5")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
     
+    // API Documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+    
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
