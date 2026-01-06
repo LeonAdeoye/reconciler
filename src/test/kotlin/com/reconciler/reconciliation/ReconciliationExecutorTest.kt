@@ -35,16 +35,17 @@ class ReconciliationExecutorTest {
         val result2 = createTestResult("rule-2", true, 0L)
 
         whenever(configLoader.getAllRules()).thenReturn(rules)
-        whenever(reconciliationService.executeReconciliation("rule-1", tradeDate)).thenReturn(result1)
-        whenever(reconciliationService.executeReconciliation("rule-2", tradeDate)).thenReturn(result2)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
+        whenever(reconciliationService.executeReconciliation("rule-1", parameters)).thenReturn(result1)
+        whenever(reconciliationService.executeReconciliation("rule-2", parameters)).thenReturn(result2)
 
         val results = executor.executeAllRules(tradeDate)
 
         assertEquals(2, results.size)
         assertEquals("rule-1", results[0].ruleName)
         assertEquals("rule-2", results[1].ruleName)
-        verify(reconciliationService).executeReconciliation("rule-1", tradeDate)
-        verify(reconciliationService).executeReconciliation("rule-2", tradeDate)
+        verify(reconciliationService).executeReconciliation("rule-1", parameters)
+        verify(reconciliationService).executeReconciliation("rule-2", parameters)
     }
 
     @Test
@@ -58,8 +59,9 @@ class ReconciliationExecutorTest {
         val result1 = createTestResult("rule-1", true, 0L)
 
         whenever(configLoader.getAllRules()).thenReturn(rules)
-        whenever(reconciliationService.executeReconciliation("rule-1", tradeDate)).thenReturn(result1)
-        whenever(reconciliationService.executeReconciliation("rule-2", tradeDate))
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
+        whenever(reconciliationService.executeReconciliation("rule-1", parameters)).thenReturn(result1)
+        whenever(reconciliationService.executeReconciliation("rule-2", parameters))
             .thenThrow(RuntimeException("Error executing rule"))
 
         val results = executor.executeAllRules(tradeDate)

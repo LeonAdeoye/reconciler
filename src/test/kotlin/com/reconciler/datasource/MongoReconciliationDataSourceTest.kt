@@ -37,15 +37,16 @@ class MongoReconciliationDataSourceTest {
     @Test
     fun `should get count successfully with map query`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = mapOf("tradeDate" to mapOf("\$eq" to "?tradeDate") as Any),
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(database.getCollection("quotes")).thenReturn(collection)
         whenever(collection.countDocuments(any<Bson>())).thenReturn(1500L)
 
-        val result = dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+        val result = dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
 
         assertEquals(1500L, result)
         verify(collection).countDocuments(any<Bson>())
@@ -54,15 +55,16 @@ class MongoReconciliationDataSourceTest {
     @Test
     fun `should get count successfully with string query`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = """{"tradeDate": {"${'$'}eq": "2024-01-15"}}""",
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(database.getCollection("orders")).thenReturn(collection)
         whenever(collection.countDocuments(any<Bson>())).thenReturn(2000L)
 
-        val result = dataSource.getCount(EntityType.ORDER, tradeDate, queryConfig)
+        val result = dataSource.getCount(EntityType.ORDER, parameters, queryConfig)
 
         assertEquals(2000L, result)
     }
@@ -77,28 +79,30 @@ class MongoReconciliationDataSourceTest {
         )
 
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = mapOf("tradeDate" to mapOf("\$eq" to "?tradeDate") as Any),
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         assertThrows<IllegalArgumentException> {
-            dataSourceWithoutMapping.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+            dataSourceWithoutMapping.getCount(EntityType.QUOTE, parameters, queryConfig)
         }
     }
 
     @Test
     fun `should throw exception when query is invalid type`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = 12345, // Invalid type
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(database.getCollection("quotes")).thenReturn(collection)
 
         assertThrows<IllegalArgumentException> {
-            dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+            dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
         }
     }
 

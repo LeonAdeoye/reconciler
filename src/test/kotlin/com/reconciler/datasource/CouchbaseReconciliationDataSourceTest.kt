@@ -30,9 +30,10 @@ class CouchbaseReconciliationDataSourceTest {
     @Test
     fun `should get count successfully`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
-            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $1",
-            parameters = null
+            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $tradeDate",
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         val mockRow = mock<com.couchbase.client.java.json.JsonObject>()
@@ -40,7 +41,7 @@ class CouchbaseReconciliationDataSourceTest {
         whenever(queryResult.rowsAsObject()).thenReturn(listOf(mockRow))
         whenever(cluster.query(any(), any())).thenReturn(queryResult)
 
-        val result = dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+        val result = dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
 
         assertEquals(1500L, result)
         verify(cluster).query(any(), any())
@@ -49,15 +50,16 @@ class CouchbaseReconciliationDataSourceTest {
     @Test
     fun `should return zero when no rows returned`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
-            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $1",
-            parameters = null
+            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $tradeDate",
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(queryResult.rowsAsObject()).thenReturn(emptyList())
         whenever(cluster.query(any(), any())).thenReturn(queryResult)
 
-        val result = dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+        val result = dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
 
         assertEquals(0L, result)
     }
@@ -65,9 +67,10 @@ class CouchbaseReconciliationDataSourceTest {
     @Test
     fun `should handle string count value`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
-            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $1",
-            parameters = null
+            count = "SELECT COUNT(*) as count FROM `bucket` WHERE tradeDate = $tradeDate",
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         val mockRow = mock<com.couchbase.client.java.json.JsonObject>()
@@ -75,7 +78,7 @@ class CouchbaseReconciliationDataSourceTest {
         whenever(queryResult.rowsAsObject()).thenReturn(listOf(mockRow))
         whenever(cluster.query(any(), any())).thenReturn(queryResult)
 
-        val result = dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+        val result = dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
 
         assertEquals(2000L, result)
     }
@@ -83,13 +86,14 @@ class CouchbaseReconciliationDataSourceTest {
     @Test
     fun `should throw exception when query is not a string`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = mapOf("field" to "value"), // Not a string
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         assertThrows<IllegalArgumentException> {
-            dataSource.getCount(EntityType.QUOTE, tradeDate, queryConfig)
+            dataSource.getCount(EntityType.QUOTE, parameters, queryConfig)
         }
     }
 

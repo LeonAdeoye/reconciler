@@ -54,7 +54,8 @@ class ReconciliationServiceTest {
         whenever(dataSourceA.getCount(any(), any(), any())).thenReturn(1500L)
         whenever(dataSourceB.getCount(any(), any(), any())).thenReturn(1500L)
 
-        val result = service.executeReconciliation(ruleName, tradeDate)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
+        val result = service.executeReconciliation(ruleName, parameters)
 
         assertNotNull(result)
         assertTrue(result.match)
@@ -83,7 +84,8 @@ class ReconciliationServiceTest {
         whenever(dataSourceA.getCount(any(), any(), any())).thenReturn(1500L)
         whenever(dataSourceB.getCount(any(), any(), any())).thenReturn(1400L)
 
-        val result = service.executeReconciliation(ruleName, tradeDate)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
+        val result = service.executeReconciliation(ruleName, parameters)
 
         assertFalse(result.match)
         assertEquals(100L, result.difference)
@@ -93,11 +95,12 @@ class ReconciliationServiceTest {
     fun `should throw exception when rule not found`() {
         val ruleName = "non-existent"
         val tradeDate = LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
 
         whenever(configLoader.getRule(ruleName)).thenReturn(null)
 
         assertThrows<IllegalArgumentException> {
-            service.executeReconciliation(ruleName, tradeDate)
+            service.executeReconciliation(ruleName, parameters)
         }
     }
 

@@ -64,10 +64,11 @@ class ReconciliationControllerTest {
     fun `should execute reconciliation`() {
         val ruleName = "test-rule"
         val tradeDate = LocalDate.of(2024, 1, 15)
-        val request = ExecuteReconciliationRequest(tradeDate)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
+        val request = ExecuteReconciliationRequest(parameters)
         val reconciliationResult = createTestResult(ruleName, true, 0L)
 
-        whenever(reconciliationService.executeReconciliation(ruleName, tradeDate))
+        whenever(reconciliationService.executeReconciliation(ruleName, parameters))
             .thenReturn(reconciliationResult)
 
         val response = controller.executeReconciliation(ruleName, request)

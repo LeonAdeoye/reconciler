@@ -21,10 +21,10 @@ class ReconciliationService(
     private val reconciliationLogger: ReconciliationLogger
 ) {
 
-    fun executeReconciliation(ruleName: String, tradeDate: LocalDate): ReconciliationResult {
+    fun executeReconciliation(ruleName: String, parameters: Map<String, String>): ReconciliationResult {
         val rule = configLoader.getRule(ruleName)
             ?: throw IllegalArgumentException("Rule not found: $ruleName")
-        return executeReconciliation(rule, tradeDate)
+        return executeReconciliation(rule, parameters)
     }
 
     fun executeAdHocReconciliation(request: AdHocReconciliationRequest): ReconciliationResult {
@@ -38,9 +38,12 @@ class ReconciliationService(
             tradeDateField = request.tradeDateField
         )
 
+        val parameters = mutableMapOf<String, String>()
+        parameters["tradeDate"] = request.tradeDate.toString()
+        
         val result = executeReconciliation(
             rule = tempRule,
-            tradeDate = request.tradeDate,
+            parameters = parameters,
             dataSourceA = request.dataSourceA,
             dataSourceB = request.dataSourceB
         )
@@ -54,7 +57,7 @@ class ReconciliationService(
 
     private fun executeReconciliation(
         rule: ReconciliationRule,
-        tradeDate: LocalDate,
+        parameters: Map<String, String>,
         dataSourceA: String? = null,
         dataSourceB: String? = null
     ): ReconciliationResult {
@@ -75,8 +78,13 @@ class ReconciliationService(
             rule.entityType
         )
 
-        val countA = dsA.getCount(rule.entityType, tradeDate, queryConfigA)
-        val countB = dsB.getCount(rule.entityType, tradeDate, queryConfigB)
+        val countA = dsA.getCount(rule.entityType, parameters, queryConfigA)
+        val countB = dsB.getCount(rule.entityType, parameters, queryConfigB)
+
+        // Extract tradeDate from parameters for backward compatibility with ReconciliationResult
+        val tradeDate = parameters["tradeDate"]?.let { 
+            java.time.LocalDate.parse(it) 
+        } ?: throw IllegalArgumentException("tradeDate parameter is required")
 
         val result = ReconciliationResult(
             ruleName = rule.name,

@@ -18,7 +18,7 @@ class MongoReconciliationDataSource(
 
     override fun getCount(
         entityType: EntityType,
-        tradeDate: LocalDate,
+        parameters: Map<String, String>,
         queryConfig: QueryConfig
     ): Long {
         val collectionName = collectionMap[entityType.name]
@@ -31,12 +31,14 @@ class MongoReconciliationDataSource(
             is Map<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 val filterDoc = Document(query as Map<String, Any>)
-                replacePlaceholders(filterDoc, tradeDate)
+                replacePlaceholders(filterDoc, parameters, queryConfig.parameters ?: emptyMap())
                 filterDoc
             }
             is String -> {
                 // If it's a string, try to parse as JSON
-                Document.parse(query)
+                val doc = Document.parse(query)
+                replacePlaceholders(doc, parameters, queryConfig.parameters ?: emptyMap())
+                doc
             }
             else -> throw IllegalArgumentException("MongoDB query must be a Map or JSON string")
         }
@@ -48,36 +50,99 @@ class MongoReconciliationDataSource(
 
     override fun getDataSourceType(): DataSourceType = DataSourceType.MONGODB
 
-    private fun replacePlaceholders(doc: Document, tradeDate: LocalDate) {
-        val dateStr = tradeDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-        replacePlaceholdersRecursive(doc, dateStr)
+    private fun replacePlaceholders(
+        doc: Document, 
+        parameters: Map<String, String>, 
+        parameterTypes: Map<String, String>
+    ) {
+        replacePlaceholdersRecursive(doc, parameters, parameterTypes)
     }
 
-    private fun replacePlaceholdersRecursive(obj: Any, dateStr: String): Any {
+    private fun replacePlaceholdersRecursive(
+        obj: Any, 
+        parameters: Map<String, String>, 
+        parameterTypes: Map<String, String>
+    ): Any {
         return when (obj) {
             is Document -> {
                 obj.forEach { (key, value) ->
-                    obj[key] = replacePlaceholdersRecursive(value, dateStr)
+                    obj[key] = replacePlaceholdersRecursive(value, parameters, parameterTypes)
                 }
                 obj
             }
             is Map<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                val map = obj as MutableMap<String, Any>
+                val originalMap = obj as Map<String, Any>
+                val map = originalMap.toMutableMap()
                 map.forEach { (key, value) ->
-                    map[key] = replacePlaceholdersRecursive(value, dateStr)
+                    map[key] = replacePlaceholdersRecursive(value, parameters, parameterTypes)
                 }
                 map
             }
             is List<*> -> {
-                obj.map { replacePlaceholdersRecursive(it!!, dateStr) }
+                obj.map { replacePlaceholdersRecursive(it!!, parameters, parameterTypes) }
             }
             is String -> {
-                when {
-                    obj == "?tradeDate" -> dateStr
-                    obj.contains("?tradeDate") -> obj.replace("?tradeDate", dateStr)
-                    else -> obj
+                // Check if this string is a placeholder like ?tradeDate, ?regionId, ?region
+                var workingString: String = obj
+                var finalResult: Any? = null
+                
+                for (paramName in parameterTypes.keys) {
+                    val placeholder = "?$paramName"
+                    val currentStr: String = workingString
+                    
+                    if (currentStr == placeholder) {
+                        val paramValue = parameters[paramName]
+                            ?: throw IllegalArgumentException("Missing required parameter: $paramName")
+                        
+                        finalResult = when (parameterTypes[paramName]?.uppercase()) {
+                            "DATE" -> {
+                                try {
+                                    LocalDate.parse(paramValue).format(DateTimeFormatter.ISO_LOCAL_DATE)
+                                } catch (e: Exception) {
+                                    throw IllegalArgumentException("Invalid date format for parameter $paramName: $paramValue", e)
+                                }
+                            }
+                            "INTEGER", "INT" -> {
+                                try {
+                                    paramValue.toInt()
+                                } catch (e: Exception) {
+                                    throw IllegalArgumentException("Invalid integer format for parameter $paramName: $paramValue", e)
+                                }
+                            }
+                            "STRING", "VARCHAR", "TEXT" -> paramValue
+                            else -> throw IllegalArgumentException("Unsupported parameter type: ${parameterTypes[paramName]} for parameter $paramName")
+                        }
+                        break
+                    } else if (currentStr.contains(placeholder)) {
+                        // If placeholder is embedded in a string, replace it
+                        val paramValue = parameters[paramName]
+                            ?: throw IllegalArgumentException("Missing required parameter: $paramName")
+                        
+                        val convertedValue = when (parameterTypes[paramName]?.uppercase()) {
+                            "DATE" -> {
+                                try {
+                                    LocalDate.parse(paramValue).format(DateTimeFormatter.ISO_LOCAL_DATE)
+                                } catch (e: Exception) {
+                                    throw IllegalArgumentException("Invalid date format for parameter $paramName: $paramValue", e)
+                                }
+                            }
+                            "INTEGER", "INT" -> {
+                                try {
+                                    paramValue.toInt().toString()
+                                } catch (e: Exception) {
+                                    throw IllegalArgumentException("Invalid integer format for parameter $paramName: $paramValue", e)
+                                }
+                            }
+                            "STRING", "VARCHAR", "TEXT" -> paramValue
+                            else -> throw IllegalArgumentException("Unsupported parameter type: ${parameterTypes[paramName]} for parameter $paramName")
+                        }
+                        workingString = currentStr.replace(placeholder, convertedValue)
+                        finalResult = workingString
+                    }
                 }
+                
+                finalResult ?: obj
             }
             else -> obj
         }

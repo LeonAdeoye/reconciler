@@ -35,7 +35,7 @@ class ReconciliationController(
     ): ReconciliationResponse {
         val result = reconciliationService.executeReconciliation(
             ruleName = ruleName,
-            tradeDate = request.tradeDate
+            parameters = request.parameters
         )
         return ReconciliationResponse(
             result = result,

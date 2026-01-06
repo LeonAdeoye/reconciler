@@ -31,9 +31,10 @@ class OracleReconciliationDataSourceTest {
     @Test
     fun `should get count successfully`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = "SELECT COUNT(*) as count FROM orders WHERE trade_date = :tradeDate",
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(jdbcTemplate.queryForObject(
@@ -42,7 +43,7 @@ class OracleReconciliationDataSourceTest {
             anyVararg()
         )).thenReturn(1500L)
 
-        val result = oracleDataSource.getCount(EntityType.ORDER, tradeDate, queryConfig)
+        val result = oracleDataSource.getCount(EntityType.ORDER, parameters, queryConfig)
 
         assertEquals(1500L, result)
         verify(jdbcTemplate).queryForObject(
@@ -55,9 +56,10 @@ class OracleReconciliationDataSourceTest {
     @Test
     fun `should return zero when query returns null`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = "SELECT COUNT(*) as count FROM orders WHERE trade_date = :tradeDate",
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         whenever(jdbcTemplate.queryForObject(
@@ -66,7 +68,7 @@ class OracleReconciliationDataSourceTest {
             anyVararg()
         )).thenReturn(null)
 
-        val result = oracleDataSource.getCount(EntityType.ORDER, tradeDate, queryConfig)
+        val result = oracleDataSource.getCount(EntityType.ORDER, parameters, queryConfig)
 
         assertEquals(0L, result)
     }
@@ -74,13 +76,14 @@ class OracleReconciliationDataSourceTest {
     @Test
     fun `should throw exception when query is not a string`() {
         val tradeDate = java.time.LocalDate.of(2024, 1, 15)
+        val parameters = mapOf("tradeDate" to tradeDate.toString())
         val queryConfig = QueryConfig(
             count = mapOf("field" to "value"), // Not a string
-            parameters = null
+            parameters = mapOf("tradeDate" to "DATE")
         )
 
         assertThrows<IllegalArgumentException> {
-            oracleDataSource.getCount(EntityType.ORDER, tradeDate, queryConfig)
+            oracleDataSource.getCount(EntityType.ORDER, parameters, queryConfig)
         }
     }
 

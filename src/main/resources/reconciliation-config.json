@@ -34,10 +34,14 @@
           "queries": {
             "ORDER": {
               "count": {
-                "tradeDate": { "$eq": "?tradeDate" }
+                "tradeDate": { "$eq": "?tradeDate" },
+                "regionId": { "$eq": "?regionId" },
+                "region": { "$eq": "?region" }
               },
               "parameters": {
-                "tradeDate": "DATE"
+                "tradeDate": "DATE",
+                "regionId": "INTEGER",
+                "region": "STRING"
               }
             }
           }
@@ -78,10 +82,14 @@
           "queries": {
             "ORDER": {
               "count": {
-                "tradeDate": { "$eq": "?tradeDate" }
+                "tradeDate": { "$eq": "?tradeDate" },
+                "regionId": { "$eq": "?regionId" },
+                "region": { "$eq": "?region" }
               },
               "parameters": {
-                "tradeDate": "DATE"
+                "tradeDate": "DATE",
+                "regionId": "INTEGER",
+                "region": "STRING"
               }
             }
           }
@@ -97,9 +105,11 @@
           "entityTypes": ["ORDER"],
           "queries": {
             "ORDER": {
-              "count": "SELECT COUNT(*) as count FROM orders WHERE trade_date = :tradeDate",
+              "count": "SELECT COUNT(*) as count FROM orders WHERE trade_date = :tradeDate AND region_id = :regionId AND region = :region",
               "parameters": {
-                "tradeDate": "DATE"
+                "tradeDate": "DATE",
+                "regionId": "INTEGER",
+                "region": "STRING"
               }
             }
           }

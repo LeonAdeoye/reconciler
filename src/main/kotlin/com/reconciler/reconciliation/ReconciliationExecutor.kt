@@ -21,7 +21,8 @@ class ReconciliationExecutor(
         rules.forEach { rule ->
             try {
                 logger.info("Executing rule: ${rule.name}")
-                val result = reconciliationService.executeReconciliation(rule.name, tradeDate)
+                val parameters = mapOf("tradeDate" to tradeDate.toString())
+                val result = reconciliationService.executeReconciliation(rule.name, parameters)
                 results.add(result)
                 logger.info("Rule ${rule.name} completed: match=${result.match}, difference=${result.difference}")
             } catch (e: Exception) {
